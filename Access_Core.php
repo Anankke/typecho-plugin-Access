@@ -104,6 +104,7 @@ class Access_Core
         }
         $list = $this->db->fetchAll($query);
         foreach ($list as &$row) {
+            $row['ip'] = inet_ntop($row['ip']);
             $ua = new Access_UA($row['ua']);
             if ($ua->isRobot()) {
                 $name = $ua->getRobotID();
@@ -372,11 +373,10 @@ class Access_Core
             $url = $this->request->getServer('REQUEST_URI');
         }
         $ip = $this->request->getIp();
-        if ($ip == null) {
+        if ($ip === 'unknown') {
             $ip = '0.0.0.0';
         }
         $ip = inet_pton($ip);
-
         $entrypoint = $this->getEntryPoint();
         $referer = $this->request->getReferer();
         $time = Helper::options()->gmtTime + (Helper::options()->timezone - Helper::options()->serverTimezone);
