@@ -8,7 +8,7 @@ CREATE TABLE `typecho_access_log` (
   `url`               varchar(255)     default ''  ,
   `path`              varchar(255)     default ''  ,
   `query_string`      varchar(255)     default ''  ,
-  `ip`                int(32) unsigned default '0' ,
+  `ip`                varbinary(16)    default '0' ,
   `entrypoint`        varchar(255)     default ''  ,
   `entrypoint_domain` varchar(100)     default ''  ,
   `referer`           varchar(255)     default ''  ,

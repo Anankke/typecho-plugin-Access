@@ -87,7 +87,7 @@ class Access_Core
         switch ($filter) {
             case 'ip':
                 $ip = $this->request->get('ip', '');
-                $ip = bindec(decbin(ip2long($ip)));
+                $ip = inet_pton($ip);
                 $query->where('ip = ?', $ip);
                 $qcount->where('ip = ?', $ip);
                 break;
@@ -375,7 +375,7 @@ class Access_Core
         if ($ip == null) {
             $ip = '0.0.0.0';
         }
-        $ip = bindec(decbin(ip2long($ip)));
+        $ip = inet_pton($ip);
 
         $entrypoint = $this->getEntryPoint();
         $referer = $this->request->getReferer();

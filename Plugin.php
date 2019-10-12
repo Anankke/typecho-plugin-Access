@@ -142,7 +142,7 @@ class Access_Plugin implements Typecho_Plugin_Interface
                         $row['os_version'] = $ua->getOSVersion();
                         $row['path'] = parse_url($row['url'], PHP_URL_PATH);
                         $row['query_string'] = parse_url($row['url'], PHP_URL_QUERY);
-                        $row['ip'] = bindec(decbin(ip2long($row['ip'])));
+                        $row['ip'] = $row['ip'];
                         $row['entrypoint'] = $row['referer'];
                         $row['entrypoint_domain'] = $row['referer_domain'];
                         $row['time'] = $row['date'];

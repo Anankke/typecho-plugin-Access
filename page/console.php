@@ -126,10 +126,10 @@ $access = new Access_Core();
                                                    title="<?php echo $log['ua']; ?>"><?php echo $log['display_name']; ?></a>
                                             </td>
                                             <td><a data-action="ip"
-                                                   data-ip="<?php echo $access->long2ip($log['ip']); ?>"
-                                                   href="#"><?php echo $access->long2ip($log['ip']); ?></a><?php if ($request->filter !== 'ip'): ?>
+                                                   data-ip="<?php echo inet_ntop($log['ip']); ?>"
+                                                   href="#"><?php echo inet_ntop($log['ip']); ?></a><?php if ($request->filter !== 'ip'): ?>
                                                 <a target="_self"
-                                                   href="<?php $options->adminUrl('extending.php?panel=' . Access_Plugin::$panel . '&filter=ip&ip=' . $access->long2ip($log['ip']) . '&type=' . $request->type); ?>">
+                                                   href="<?php $options->adminUrl('extending.php?panel=' . Access_Plugin::$panel . '&filter=ip&ip=' . inet_ntop($log['ip']) . '&type=' . $request->type); ?>">
                                                         [ ? ]</a><?php endif; ?></td>
                                             <td><a target="_blank" data-action="referer"
                                                    href="<?php echo $log['referer']; ?>"><?php echo $log['referer']; ?></a>
