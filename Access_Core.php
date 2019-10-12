@@ -1,6 +1,6 @@
 <?php
 if (!defined('__ACCESS_PLUGIN_ROOT__')) {
-    throw new Exception('Boostrap file not found');
+    throw new RuntimeException('Boostrap file not found');
 }
 
 class Access_Core
@@ -28,7 +28,7 @@ class Access_Core
         # Load language pack
         if (Typecho_I18n::getLang() != 'zh_CN') {
             $file = __TYPECHO_ROOT_DIR__ . __TYPECHO_PLUGIN_DIR__ .
-            '/Access/lang/' . Typecho_I18n::getLang() . '.mo';
+                '/Access/lang/' . Typecho_I18n::getLang() . '.mo';
             file_exists($file) && Typecho_I18n::addLang($file);
         }
         # Init variables
@@ -67,7 +67,7 @@ class Access_Core
         $type = $this->request->get('type', 1);
         $filter = $this->request->get('filter', 'all');
         $pagenum = $this->request->get('page', 1);
-        $offset = (max(intval($pagenum), 1) - 1) * $this->config->pageSize;
+        $offset = (max((int)$pagenum, 1) - 1) * $this->config->pageSize;
         $query = $this->db->select()->from('table.access_log')
             ->order('time', Typecho_Db::SORT_DESC)
             ->offset($offset)->limit($this->config->pageSize);
@@ -123,7 +123,7 @@ class Access_Core
         $this->logs['list'] = $this->htmlEncode($this->urlDecode($list));
 
         $this->logs['rows'] = $this->db->fetchAll($qcount)[0]['count'];
-        
+
         $filter = $this->request->get('filter', 'all');
         $filterOptions = $this->request->get($filter);
 
@@ -140,11 +140,11 @@ class Access_Core
         $this->logs['page'] = $page->show();
 
         $this->logs['cidList'] = $this->db->fetchAll($this->db->select('DISTINCT content_id as cid, COUNT(1) as count, table.contents.title')
-                ->from('table.access_log')
-                ->join('table.contents', 'table.access_log.content_id = table.contents.cid')
-                ->where('table.access_log.content_id <> ?', null)
-                ->group('table.access_log.content_id')
-                ->order('count', Typecho_Db::SORT_DESC));
+            ->from('table.access_log')
+            ->join('table.contents', 'table.access_log.content_id = table.contents.cid')
+            ->where('table.access_log.content_id <> ?', null)
+            ->group('table.access_log.content_id')
+            ->order('count', Typecho_Db::SORT_DESC));
     }
 
     /**
@@ -156,11 +156,11 @@ class Access_Core
     protected function parseReferer()
     {
         $this->referer['url'] = $this->db->fetchAll($this->db->select('DISTINCT entrypoint AS value, COUNT(1) as count')
-                ->from('table.access_log')->where("entrypoint <> ''")->group('entrypoint')
-                ->order('count', Typecho_Db::SORT_DESC)->limit($this->config->pageSize));
+            ->from('table.access_log')->where("entrypoint <> ''")->group('entrypoint')
+            ->order('count', Typecho_Db::SORT_DESC)->limit($this->config->pageSize));
         $this->referer['domain'] = $this->db->fetchAll($this->db->select('DISTINCT entrypoint_domain AS value, COUNT(1) as count')
-                ->from('table.access_log')->where("entrypoint_domain <> ''")->group('entrypoint_domain')
-                ->order('count', Typecho_Db::SORT_DESC)->limit($this->config->pageSize));
+            ->from('table.access_log')->where("entrypoint_domain <> ''")->group('entrypoint_domain')
+            ->order('count', Typecho_Db::SORT_DESC)->limit($this->config->pageSize));
         $this->referer = $this->htmlEncode($this->urlDecode($this->referer));
     }
 
@@ -180,70 +180,70 @@ class Access_Core
         }
 
         # 分类分时段统计数据
-        foreach (array('today' => date("Y-m-d"), 'yesterday' => date("Y-m-d", strtotime('-1 day'))) as $day => $time) {
+        foreach (array('today' => date('Y-m-d'), 'yesterday' => date('Y-m-d', strtotime('-1 day'))) as $day => $time) {
             for ($i = 0; $i < 24; $i++) {
                 $start = strtotime(date("{$time} {$i}:00:00"));
                 $end = strtotime(date("{$time} {$i}:59:59"));
                 // "SELECT DISTINCT ip FROM {$this->table} {$where} AND `time` BETWEEN {$start} AND {$end}"));
                 $subQuery = $this->db->select('DISTINCT ip')->from('table.access_log')
-                    ->where("time >= ? AND time <= ?", $start, $end);
+                    ->where('time >= ? AND time <= ?', $start, $end);
                 if (method_exists($subQuery, 'prepare')) {
                     $subQuery = $subQuery->prepare($subQuery);
                 }
-                $this->overview['ip'][$day]['hours'][$i] = intval($this->db->fetchAll($this->db->select('COUNT(1) AS count')
-                        ->from('(' . $subQuery . ') AS tmp'))[0]['count']);
+                $this->overview['ip'][$day]['hours'][$i] = (int)$this->db->fetchAll($this->db->select('COUNT(1) AS count')
+                    ->from('(' . $subQuery . ') AS tmp'))[0]['count'];
                 // "SELECT DISTINCT ip,ua FROM {$this->table} {$where} AND `time` BETWEEN {$start} AND {$end}"));
                 $subQuery = $this->db->select('DISTINCT ip,ua')->from('table.access_log')
-                    ->where("time >= ? AND time <= ?", $start, $end);
+                    ->where('time >= ? AND time <= ?', $start, $end);
                 if (method_exists($subQuery, 'prepare')) {
                     $subQuery = $subQuery->prepare($subQuery);
                 }
-                $this->overview['uv'][$day]['hours'][$i] = intval($this->db->fetchAll($this->db->select('COUNT(1) AS count')
-                        ->from('(' . $subQuery . ') AS tmp'))[0]['count']);
+                $this->overview['uv'][$day]['hours'][$i] = (int)$this->db->fetchAll($this->db->select('COUNT(1) AS count')
+                    ->from('(' . $subQuery . ') AS tmp'))[0]['count'];
                 // "SELECT ip FROM {$this->table} {$where} AND `time` BETWEEN {$start} AND {$end}"));
-                $this->overview['pv'][$day]['hours'][$i] = intval($this->db->fetchAll($this->db->select('COUNT(1) AS count')
-                        ->from('table.access_log')->where('time >= ? AND time <= ?', $start, $end))[0]['count']);
+                $this->overview['pv'][$day]['hours'][$i] = (int)$this->db->fetchAll($this->db->select('COUNT(1) AS count')
+                    ->from('table.access_log')->where('time >= ? AND time <= ?', $start, $end))[0]['count'];
 
             }
 
             $start = strtotime(date("{$time} 00:00:00"));
             $end = strtotime(date("{$time} 23:59:59"));
 
-            $subQuery = $this->db->select('DISTINCT ip')->from('table.access_log')->where("time >= ? AND time <= ?", $start, $end);
+            $subQuery = $this->db->select('DISTINCT ip')->from('table.access_log')->where('time >= ? AND time <= ?', $start, $end);
             if (method_exists($subQuery, 'prepare')) {
                 $subQuery = $subQuery->prepare($subQuery);
             }
             $this->overview['ip'][$day]['total'] = $this->db->fetchAll($this->db->select('COUNT(1) AS count')->from('(' . $subQuery . ') AS tmp'))[0]['count'];
 
-            $subQuery = $this->db->select('DISTINCT ip,ua')->from('table.access_log')->where("time >= ? AND time <= ?", $start, $end);
+            $subQuery = $this->db->select('DISTINCT ip,ua')->from('table.access_log')->where('time >= ? AND time <= ?', $start, $end);
             if (method_exists($subQuery, 'prepare')) {
                 $subQuery = $subQuery->prepare($subQuery);
             }
             $this->overview['uv'][$day]['total'] = $this->db->fetchAll($this->db->select('COUNT(1) AS count')->from('(' . $subQuery . ') AS tmp'))[0]['count'];
 
             $this->overview['pv'][$day]['total'] = $this->db->fetchAll($this->db->select('COUNT(1) AS count')
-                    ->from('table.access_log')
-                    ->where("time >= ? AND time <= ?", $start, $end)
+                ->from('table.access_log')
+                ->where('time >= ? AND time <= ?', $start, $end)
             )[0]['count'];
         }
 
         # 总统计数据
         // "SELECT DISTINCT ip FROM {$this->table} {$where}"));
         $this->overview['ip']['all']['total'] = $this->db->fetchAll($this->db->select('COUNT(1) AS count')
-                ->from('(' . $this->db->select('DISTINCT ip')->from('table.access_log') . ') AS tmp'))[0]['count'];
+            ->from('(' . $this->db->select('DISTINCT ip')->from('table.access_log') . ') AS tmp'))[0]['count'];
         // "SELECT DISTINCT ip,ua FROM {$this->table} {$where}"));
         $this->overview['uv']['all']['total'] = $this->db->fetchAll($this->db->select('COUNT(1) AS count')
-                ->from('(' . $this->db->select('DISTINCT ip,ua')->from('table.access_log') . ') AS tmp'))[0]['count'];
+            ->from('(' . $this->db->select('DISTINCT ip,ua')->from('table.access_log') . ') AS tmp'))[0]['count'];
         // "SELECT ip FROM {$this->table} {$where}"));
         $this->overview['pv']['all']['total'] = $this->db->fetchAll($this->db->select('COUNT(1) AS count')
-                ->from('table.access_log'))[0]['count'];
+            ->from('table.access_log'))[0]['count'];
 
         # 分类型绘制24小时访问图
         $this->overview['chart']['xAxis']['categories'] = Json::encode(range(0, 23));
         foreach (array('ip', 'uv', 'pv') as $type) {
             $this->overview['chart']['series'][$type] = Json::encode($this->overview[$type]['today']['hours']);
         }
-        $this->overview['chart']['title']['text'] = _t('%s 统计', date("Y-m-d"));
+        $this->overview['chart']['title']['text'] = _t('%s 统计', date('Y-m-d'));
     }
 
     /**
@@ -313,21 +313,21 @@ class Access_Core
         if (!$hasLogin) {
             return false;
         }
-        $isAdmin = Typecho_Widget::widget('Widget_User')->pass('administrator', true);
-        return $isAdmin;
+        return Typecho_Widget::widget('Widget_User')->pass('administrator', true);
     }
 
     /**
      * 删除记录
      *
      * @access public
+     * @param $ids
      * @return void
      */
     public function deleteLogs($ids)
     {
         foreach ($ids as $id) {
             $this->db->query($this->db->delete('table.access_log')
-                    ->where('id = ?', $id)
+                ->where('id = ?', $id)
             );
         }
     }
@@ -357,6 +357,10 @@ class Access_Core
      * 记录当前访问（管理员登录不会记录）
      *
      * @access public
+     * @param null $archive
+     * @param null $url
+     * @param null $content_id
+     * @param null $meta_id
      * @return void
      */
     public function writeLogs($archive = null, $url = null, $content_id = null, $meta_id = null)
@@ -410,7 +414,9 @@ class Access_Core
 
         try {
             $this->db->query($this->db->insert('table.access_log')->rows($rows));
-        } catch (Exception $e) {} catch (Typecho_Db_Query_Exception $e) {}
+        } catch (Exception $e) {
+        } catch (Typecho_Db_Query_Exception $e) {
+        }
     }
 
     /**
@@ -445,6 +451,7 @@ class Access_Core
      * 解析archive对象
      *
      * @access public
+     * @param $archive
      * @return array
      */
     public function parseArchive($archive)
@@ -460,21 +467,27 @@ class Access_Core
             $meta_id = $archive->tags[0]['mid'];
         } elseif ($archive->is('category')) {
             $meta_id = $archive->categories[0]['mid'];
-        } elseif ($archive->is('archive', 404)) {}
+        } elseif ($archive->is('archive', 404)) {
+        }
 
         return array(
             'content_id' => $content_id,
             'meta_id' => $meta_id,
         );
     }
-    
-    public function long2ip($long) {
-        if ($long < 0 || $long > 4294967295) return false;
-        $ip = "";
-        for ($i=3;$i>=0;$i--) {
-            $ip .= (int)($long / pow(256,$i));
-            $long -= (int)($long / pow(256,$i))*pow(256,$i);
-            if ($i>0) $ip .= ".";
+
+    public function long2ip($long)
+    {
+        if ($long < 0 || $long > 4294967295) {
+            return false;
+        }
+        $ip = '';
+        for ($i = 3; $i >= 0; $i--) {
+            $ip .= (int)($long / (256 ** $i));
+            $long -= (int)($long / (256 ** $i)) * (256 ** $i);
+            if ($i > 0) {
+                $ip .= '.';
+            }
         }
         return $ip;
     }

@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . '/Access_Bootstrap.php';
+
 /**
  * 获取访客信息，生成统计图表，由<a href="https://zhaiyiming.com/">@一名宅</a> 部分优化重构。
  *
@@ -21,11 +22,11 @@ class Access_Plugin implements Typecho_Plugin_Interface
      */
     public static function activate()
     {
-        $msg = Access_Plugin::install();
+        $msg = self::install();
         Helper::addPanel(1, self::$panel, _t('Access控制台'), _t('Access插件控制台'), 'subscriber');
-        Helper::addRoute("access_track_gif", "/access/log/track.gif", "Access_Action", 'writeLogs');
-        Helper::addRoute("access_ip", "/access/ip.json", "Access_Action", 'ip');
-        Helper::addRoute("access_delete_logs", "/access/log/delete.json", "Access_Action", 'deleteLogs');
+        Helper::addRoute('access_track_gif', '/access/log/track.gif', 'Access_Action', 'writeLogs');
+        Helper::addRoute('access_ip', '/access/ip.json', 'Access_Action', 'ip');
+        Helper::addRoute('access_delete_logs', '/access/log/delete.json', 'Access_Action', 'deleteLogs');
         Typecho_Plugin::factory('Widget_Archive')->beforeRender = array('Access_Plugin', 'backend');
         Typecho_Plugin::factory('Widget_Archive')->footer = array('Access_Plugin', 'frontend');
         Typecho_Plugin::factory('admin/footer.php')->end = array('Access_Plugin', 'adminFooter');
@@ -48,9 +49,9 @@ class Access_Plugin implements Typecho_Plugin_Interface
             $db->query("DROP TABLE `{$db->getPrefix()}access_log`", Typecho_Db::WRITE);
         }
         Helper::removePanel(1, self::$panel);
-        Helper::removeRoute("access_track_gif");
-        Helper::removeRoute("access_ip");
-        Helper::removeRoute("access_delete_logs");
+        Helper::removeRoute('access_track_gif');
+        Helper::removeRoute('access_ip');
+        Helper::removeRoute('access_delete_logs');
     }
 
     /**
@@ -67,19 +68,19 @@ class Access_Plugin implements Typecho_Plugin_Interface
             '分页数量', '每页显示的日志数量');
         $isDrop = new Typecho_Widget_Helper_Form_Element_Radio(
             'isDrop', array(
-                '0' => '删除',
-                '1' => '不删除',
-            ), '1', '删除数据表:', '请选择是否在禁用插件时，删除日志数据表');
+            '0' => '删除',
+            '1' => '不删除',
+        ), '1', '删除数据表:', '请选择是否在禁用插件时，删除日志数据表');
         $writeType = new Typecho_Widget_Helper_Form_Element_Radio(
             'writeType', array(
-                '0' => '后端',
-                '1' => '前端',
-            ), '0', '日志写入类型:', '请选择日志写入类型，如果写入速度较慢可选择前端写入日志。<br/>如果您使用了pjax，请在pjax相关事件中调用 window.Access.track() 方法。');
+            '0' => '后端',
+            '1' => '前端',
+        ), '0', '日志写入类型:', '请选择日志写入类型，如果写入速度较慢可选择前端写入日志。<br/>如果您使用了pjax，请在pjax相关事件中调用 window.Access.track() 方法。');
         $canAnalytize = new Typecho_Widget_Helper_Form_Element_Radio(
             'canAnalytize', array(
-                '0' => '不允许',
-                '1' => '允许',
-            ), '1', '允许统计使用情况:', '请选择是否允许插件作者统计使用情况');
+            '0' => '不允许',
+            '1' => '允许',
+        ), '1', '允许统计使用情况:', '请选择是否允许插件作者统计使用情况');
         $form->addInput($pageSize);
         $form->addInput($isDrop);
         $form->addInput($writeType);
@@ -94,7 +95,8 @@ class Access_Plugin implements Typecho_Plugin_Interface
      * @return void
      */
     public static function personalConfig(Typecho_Widget_Helper_Form $form)
-    {}
+    {
+    }
 
     /**
      * 初始化以及升级插件数据库，如初始化失败,直接抛出异常
@@ -105,17 +107,16 @@ class Access_Plugin implements Typecho_Plugin_Interface
      */
     public static function install()
     {
-        if (substr(trim(dirname(__FILE__), '/'), -6) != 'Access') {
+        if (substr(trim(__DIR__, '/'), -6) != 'Access') {
             throw new Typecho_Plugin_Exception(_t('插件目录名必须为Access'));
         }
         $db = Typecho_Db::get();
         $adapterName = $db->getAdapterName();
-        
+
         if (strpos($adapterName, 'Mysql') !== false) {
-            $prefix  = $db->getPrefix();
+            $prefix = $db->getPrefix();
             $scripts = file_get_contents('usr/plugins/Access/sql/Mysql.sql');
-            $scripts = str_replace('typecho_', $prefix, $scripts);
-            $scripts = str_replace('%charset%', 'utf8', $scripts);
+            $scripts = str_replace(array('typecho_', '%charset%'), array($prefix, 'utf8'), $scripts);
             $scripts = explode(';', $scripts);
             try {
                 $configLink = '<a href="' . Helper::options()->adminUrl . 'options-plugin.php?config=Access">' . _t('前往设置') . '</a>';
@@ -135,25 +136,26 @@ class Access_Plugin implements Typecho_Plugin_Interface
                     foreach ($rows as $row) {
                         $ua = new Access_UA($row['ua']);
                         $time = Helper::options()->gmtTime + (Helper::options()->timezone - Helper::options()->serverTimezone);
-                        $row['browser_id'       ] = $ua->getBrowserID();
-                        $row['browser_version'  ] = $ua->getBrowserVersion();
-                        $row['os_id'            ] = $ua->getOSID();
-                        $row['os_version'       ] = $ua->getOSVersion();
-                        $row['path'             ] = parse_url($row['url'], PHP_URL_PATH);
-                        $row['query_string'     ] = parse_url($row['url'], PHP_URL_QUERY);
-                        $row['ip'               ] = bindec(decbin(ip2long($row['ip'])));
-                        $row['entrypoint'       ] = $row['referer'];
+                        $row['browser_id'] = $ua->getBrowserID();
+                        $row['browser_version'] = $ua->getBrowserVersion();
+                        $row['os_id'] = $ua->getOSID();
+                        $row['os_version'] = $ua->getOSVersion();
+                        $row['path'] = parse_url($row['url'], PHP_URL_PATH);
+                        $row['query_string'] = parse_url($row['url'], PHP_URL_QUERY);
+                        $row['ip'] = bindec(decbin(ip2long($row['ip'])));
+                        $row['entrypoint'] = $row['referer'];
                         $row['entrypoint_domain'] = $row['referer_domain'];
-                        $row['time'             ] = $row['date'];
-                        $row['robot'            ] = $ua->isRobot() ? 1 : 0;
-                        $row['robot_id'         ] = $ua->getRobotID();
-                        $row['robot_version'    ] = $ua->getRobotVersion();
+                        $row['time'] = $row['date'];
+                        $row['robot'] = $ua->isRobot() ? 1 : 0;
+                        $row['robot_id'] = $ua->getRobotID();
+                        $row['robot_version'] = $ua->getRobotVersion();
                         unset($row['date']);
                         try {
                             $db->query($db->insert('table.access_log')->rows($row));
                         } catch (Typecho_Db_Exception $e) {
-                            if ($e->getCode() != 23000)
+                            if ($e->getCode() != 23000) {
                                 throw new Typecho_Plugin_Exception(_t('导入旧版数据失败，插件启用失败，错误信息：%s。', $e->getMessage()));
+                            }
                         }
                     }
                     $db->query("DROP TABLE `{$prefix}access`;", Typecho_Db::WRITE);
@@ -166,7 +168,7 @@ class Access_Plugin implements Typecho_Plugin_Interface
                 throw new Typecho_Plugin_Exception($e->getMessage());
             }
         } else if (strpos($adapterName, 'SQLite') !== false) {
-            $prefix  = $db->getPrefix();
+            $prefix = $db->getPrefix();
             $scripts = file_get_contents('usr/plugins/Access/sql/SQLite.sql');
             $scripts = str_replace('typecho_', $prefix, $scripts);
             $scripts = explode(';', $scripts);
@@ -199,6 +201,7 @@ class Access_Plugin implements Typecho_Plugin_Interface
      * 获取后端统计，该统计方法可以统计到一切访问
      *
      * @access public
+     * @param $archive
      * @return void
      */
     public static function backend($archive)
@@ -215,6 +218,7 @@ class Access_Plugin implements Typecho_Plugin_Interface
      * 获取前端统计，该方法要求客户端必须渲染网页，所以不能统计RSS等直接抓取PHP页面的方式
      *
      * @access public
+     * @param $archive
      * @return void
      */
     public static function frontend($archive)
@@ -224,7 +228,7 @@ class Access_Plugin implements Typecho_Plugin_Interface
             $index = rtrim(Helper::options()->index, '/');
             $access = new Access_Core();
             $parsedArchive = $access->parseArchive($archive);
-            echo "<script type=\"text/javascript\">(function(w){var t=function(){var i=new Image();i.src='{$index}/access/log/track.gif?u='+location.pathname+location.search+location.hash+'&cid={$parsedArchive['content_id']}&mid={$parsedArchive['meta_id']}&rand='+new Date().getTime()};t();var a={};a.track=t;w.Access=a})(this);</script>";
+            echo ">(function(w){var t=function(){var i=new Image();i.src='{$index}/access/log/track.gif?u='+location.pathname+location.search+location.hash+'&cid={$parsedArchive['content_id']}&mid={$parsedArchive['meta_id']}&rand='+new Date().getTime()};t(); var a={};a.track=t;w.Access=a})(this);</script>";
         }
     }
 
