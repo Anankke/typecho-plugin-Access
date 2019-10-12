@@ -1,6 +1,6 @@
 <?php
 if (!defined('__ACCESS_PLUGIN_ROOT__')) {
-    throw new RuntimeException('Boostrap file not found');
+    throw new RuntimeException('Bootstrap file not found');
 }
 
 class Access_Core
@@ -26,7 +26,7 @@ class Access_Core
     public function __construct()
     {
         # Load language pack
-        if (Typecho_I18n::getLang() != 'zh_CN') {
+        if (Typecho_I18n::getLang() !== 'zh_CN') {
             $file = __TYPECHO_ROOT_DIR__ . __TYPECHO_PLUGIN_DIR__ .
                 '/Access/lang/' . Typecho_I18n::getLang() . '.mo';
             file_exists($file) && Typecho_I18n::addLang($file);
