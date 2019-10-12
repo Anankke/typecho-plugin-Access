@@ -475,21 +475,4 @@ class Access_Core
             'meta_id' => $meta_id,
         );
     }
-
-    public function long2ip($long)
-    {
-        if ($long < 0 || $long > 4294967295) {
-            return false;
-        }
-        $ip = '';
-        for ($i = 3; $i >= 0; $i--) {
-            $ip .= (int)($long / (256 ** $i));
-            $long -= (int)($long / (256 ** $i)) * (256 ** $i);
-            if ($i > 0) {
-                $ip .= '.';
-            }
-        }
-        return $ip;
-    }
-
 }
